@@ -108,7 +108,7 @@
 </style>
 </head>
 <body>
-<div class="ribbon" id="ribbon">PROTOTYPE — CONTRACT NOT YET DEPLOYED · every address/link below is a placeholder until the deployment ceremony · nothing here can take funds</div>
+<div class="ribbon" id="ribbon">LIVE ON CHAIN 4663 — verify the contract yourself; trust nothing, including this page</div>
 <header>
   <div class="brand">FAB 4200</div>
   <nav><a href="#mint" style="color:var(--robin)">mint</a><a href="#arch">no owner</a><a href="#wafermap">wafer</a><a href="#rule">work rule</a><a href="#trust">trust</a><a href="#verify">verify</a><a href="#agents">agents</a><a href="#safety">safety</a></nav>
@@ -805,14 +805,14 @@ if (typeof module !== "undefined") module.exports = { assembleSVG, deriveTraits,
 <script>
 // ================= CONFIG — filled at deployment ceremony =================
 const CFG = {
-  deployed: false,
+  deployed: true,
   chainId: 4663, chainHex: "0x1237",
-  contract: "0x0000000000000000000000000000000000000000", // TODO ceremony
-  rpc: "https://RPC_PLACEHOLDER",                          // TODO official RH Chain RPC
-  explorers: [],                                           // TODO explorer tx/address URL bases
+  contract: "0xEF08089e4E082071AA39Ce99C460c0250744d758",
+  rpc: "https://rpc.mainnet.chain.robinhood.com",                          // official Robinhood Chain RPC
+  explorers: ["https://robinhoodchain.blockscout.com"],                                           // official Blockscout explorer
   floorBits: 26,
   verifySelector: "0x8753367f", // verify(uint256) — recompute & confirm at ceremony
-  renderer: "0x0000000000000000000000000000000000000000", // TODO ceremony (Phase 7.4)
+  renderer: "0xd08BFdCf5C9f774eb7623eb32F37c098BF36A7a5",
 };
 const binFromBits = b => Math.max(1, Math.min(6, 1 + Math.floor((b - CFG.floorBits) / 2)));
 const BIN_NAMES = ["14nm","10nm","7nm","5nm","3nm","2nm GOLDEN"];
