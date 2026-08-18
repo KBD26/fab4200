@@ -989,6 +989,37 @@ document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=async()=>{
   }
   refresh(); setInterval(refresh, CFG.deployed?15000:1400);
 })();
+
+// live header chips: MINTED count + OPEN_AT countdown, read straight from the chain
+(function(){
+  if(!CFG.deployed) return;
+  var openAt = 0;
+  function rpc(data){
+    return fetch(CFG.rpc,{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({jsonrpc:"2.0",id:1,method:"eth_call",params:[{to:CFG.contract,data:data},"latest"]})})
+      .then(function(r){return r.json();}).then(function(j){return j.result;});
+  }
+  function fmt(sec){
+    var d=Math.floor(sec/86400), h=Math.floor(sec%86400/3600), m=Math.floor(sec%3600/60), x=Math.floor(sec%60);
+    return (d? d+"d ":"")+String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(x).padStart(2,"0");
+  }
+  function poll(){
+    rpc("0x4f02c420").then(function(m){
+      if(m) document.getElementById("cMinted").textContent = parseInt(m,16)+"/4200";
+    }).catch(function(){});
+    if(!openAt){
+      rpc("0xd8f93498").then(function(o){ if(o) openAt = parseInt(o,16); }).catch(function(){});
+    }
+  }
+  function tick(){
+    if(!openAt) return;
+    var left = openAt - Math.floor(Date.now()/1000);
+    document.getElementById("cStatus").textContent = left>0 ? ("OPENS IN "+fmt(left)) : "MINE OPEN";
+  }
+  poll(); tick();
+  setInterval(poll, 15000);
+  setInterval(tick, 1000);
+})();
 updatePacket();
 </script>
 </body>
