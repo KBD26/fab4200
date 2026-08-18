@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAB 4200 — you don't buy silicon. you fab it.</title>
+<style>
+  :root{--bg:#0A0C0E;--panel:#101418;--line:#1C2328;--line2:#2A343B;--txt:#C9D4CE;--dim:#7C8A84;
+    --robin:#CCFF00;--mag:#FF2FD6;--cyan:#00E5FF;--gold:#FFD24D;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;--sans:system-ui,-apple-system,'Segoe UI',sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font-family:var(--sans);line-height:1.55}
+  .ribbon{background:#241C10;color:var(--gold);font-family:var(--mono);font-size:11.5px;text-align:center;
+    padding:8px 14px;border-bottom:1px solid #3a2f18}
+  header{padding:22px 28px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:baseline}
+  .brand{font-size:15px;font-weight:600;letter-spacing:.35em;color:var(--robin)}
+  nav a{color:var(--dim);font-family:var(--mono);font-size:11.5px;text-decoration:none;margin-left:14px}
+  nav a:hover{color:var(--robin)}
+  section{max-width:1060px;margin:0 auto;padding:46px 28px;border-bottom:1px solid var(--line)}
+  h1{font-size:clamp(30px,5.4vw,52px);font-weight:650;letter-spacing:-.01em;color:#EAF2EC}
+  h1 b{color:var(--robin);font-weight:650}
+  h2{font-size:12px;letter-spacing:.3em;color:var(--dim);text-transform:uppercase;margin-bottom:18px}
+  p.lead{color:var(--dim);max-width:62ch;margin-top:14px}
+  .chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;font-family:var(--mono);font-size:12px}
+  .chip{border:1px solid var(--line2);padding:8px 12px;background:var(--panel)}
+  .chip b{color:var(--robin);font-weight:600}
+  .rule{font-family:var(--mono);font-size:clamp(11px,2vw,14px);background:var(--panel);border:1px solid var(--line);
+    padding:16px;overflow:auto;color:#EAF2EC}
+  .rule i{color:var(--robin);font-style:normal}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:900px){.grid2{grid-template-columns:1fr}}
+  .ledger{display:flex;flex-direction:column;gap:12px}
+  .claim{border:1px solid var(--line);background:var(--panel);padding:14px 16px}
+  .claim b{color:var(--robin);font-weight:600;font-family:var(--mono);font-size:12.5px;letter-spacing:.06em}
+  .claim p{font-size:13px;color:var(--dim);margin-top:6px}
+  .claim p code{color:var(--txt)}
+  button,select,input[type=text]{font-family:var(--mono);font-size:12.5px;background:var(--panel);color:var(--txt);
+    border:1px solid var(--line2);padding:9px 13px;cursor:pointer}
+  input[type=text]{cursor:text;width:100%}
+  button:hover{border-color:var(--robin);color:var(--robin)}
+  button:disabled{opacity:.35;cursor:not-allowed}
+  button.primary{border-color:var(--robin);color:var(--robin)}
+  button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--robin);outline-offset:1px}
+  .lbl{font-size:10px;letter-spacing:.26em;color:var(--dim);text-transform:uppercase;display:block;margin:14px 0 6px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px;font-family:var(--mono);font-size:12px}
+  .stat{border:1px solid var(--line);padding:10px;background:var(--panel)}
+  .stat span{display:block;color:var(--dim);font-size:10px;letter-spacing:.2em;margin-bottom:4px}
+  .stat b{color:var(--robin);font-weight:600}
+  #preview{width:100%;max-width:420px;aspect-ratio:1;border:1px solid var(--line);background:#07090B;margin-top:8px}
+  #preview svg{display:block;width:100%;height:100%}
+  .packet .row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+  .packet input{flex:1}
+  .warn{border:1px solid #3a1830;background:#160a12;color:var(--mag);font-family:var(--mono);font-size:12px;padding:12px 14px;margin-top:16px}
+  .oklog{font-family:var(--mono);font-size:12px;color:var(--dim);min-height:18px;margin-top:10px}
+  .oklog.ok{color:var(--robin)} .oklog.bad{color:var(--mag)}
+  pre{background:var(--panel);border:1px solid var(--line);padding:14px;font-size:11.5px;overflow:auto;color:var(--txt)}
+  ul.safe{list-style:none;display:flex;flex-direction:column;gap:8px;font-size:13.5px;color:var(--dim)}
+  ul.safe li::before{content:"▮ ";color:var(--robin)}
+  footer{padding:26px 28px;font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center}
+  a{color:var(--robin)}
+  .cta-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:30px}
+  .cta{font-family:var(--mono);font-size:14px;letter-spacing:.06em;padding:16px 22px;border:1.5px solid var(--robin);
+    color:var(--robin);background:rgba(204,255,0,0.06);text-decoration:none;display:inline-block}
+  .cta.alt{border-color:var(--line2);color:var(--txt);background:var(--panel)}
+  .cta:hover{background:var(--robin);color:#0A0C0E}
+  #mint{border-top:2px solid var(--robin)}
+  .stepnum{font-family:var(--mono);color:var(--robin);font-size:12px;letter-spacing:.24em;display:block;margin-bottom:10px}
+  .paths{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:14px}
+  @media(max-width:900px){.paths{grid-template-columns:1fr}}
+  .path{border:1.5px solid var(--robin);background:linear-gradient(180deg,rgba(204,255,0,0.06),rgba(204,255,0,0) 55%);padding:22px}
+  .path.alt{border:1px solid var(--line2);background:var(--panel)}
+  .path h3{font-family:var(--mono);font-size:17px;letter-spacing:.12em;color:#EAF2EC;margin-bottom:6px}
+  .badge{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.22em;border:1px solid var(--robin);
+    color:var(--robin);padding:4px 9px;margin-bottom:14px}
+  .badge.dim{border-color:var(--line2);color:var(--dim)}
+  .marquee{margin-top:26px;border-top:1px solid var(--robin);border-bottom:1px solid var(--robin);
+    padding:12px 4px;font-family:var(--mono);font-size:clamp(12px,1.8vw,15px);letter-spacing:.18em;color:var(--robin)}
+  .safebar{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:6px 0 26px}
+  .safebar .g{border:1px solid var(--robin);background:rgba(204,255,0,0.05);padding:12px;font-family:var(--mono)}
+  .safebar .g b{display:block;color:var(--robin);font-size:13px;letter-spacing:.08em}
+  .safebar .g span{color:var(--dim);font-size:11px}
+  .kicker{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--dim);display:block;margin-bottom:6px}
+  .path h3{font-size:20px}
+  .warn{font-size:13.5px;padding:16px 18px}
+  #arch{border-top:2px solid var(--robin)}
+  .archline{font-size:clamp(26px,4.6vw,44px);font-weight:650;color:#EAF2EC;line-height:1.25;margin:6px 0 26px}
+  .archline b{color:var(--robin);font-weight:650}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+  .tile{border:1px solid var(--line);background:var(--panel);padding:18px}
+  .tile b{display:block;font-family:var(--mono);font-size:34px;color:var(--robin);margin-bottom:6px}
+  .tile i{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:#EAF2EC;font-style:normal;margin-bottom:8px}
+  .tile span{font-size:12.5px;color:var(--dim)}
+  .archfoot{margin-top:22px;font-size:14px;color:var(--dim);max-width:66ch}
+  .archfoot code{color:var(--txt)}
+  #wafer{max-width:520px;margin:8px auto 0;display:block}
+  .wafergrid{display:grid;grid-template-columns:repeat(20,1fr);gap:2px;max-width:520px;margin:14px auto}
+  .wcell{aspect-ratio:1;background:#0D1013;border:1px solid #141A08}
+  .wcell.minted{background:#26320B} .wcell.hot{background:#CCFF00} .wcell.burnt{background:#FF2FD6}
+  .waferlegend{display:flex;gap:16px;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:8px;flex-wrap:wrap}
+  .waferlegend b{color:var(--txt);font-weight:500}
+  .lore{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
+  @media(max-width:760px){.lore{grid-template-columns:1fr}}
+  .lorecard{border:1px solid var(--line);background:var(--panel);padding:16px 18px}
+  .lorecard b{font-family:var(--mono);color:var(--robin);font-size:12.5px;letter-spacing:.06em;display:block;margin-bottom:6px}
+  .lorecard p{font-size:13px;color:var(--dim)}
+  .fineprint{margin-top:26px;padding-top:14px;border-top:1px dashed var(--line);
+    font-family:var(--mono);font-size:11px;color:var(--dim);max-width:78ch;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="ribbon" id="ribbon">PROTOTYPE — CONTRACT NOT YET DEPLOYED · every address/link below is a placeholder until the deployment ceremony · nothing here can take funds</div>
+<header>
+  <div class="brand">FAB 4200</div>
+  <nav><a href="#mint" style="color:var(--robin)">mint</a><a href="#arch">no owner</a><a href="#wafermap">wafer</a><a href="#rule">work rule</a><a href="#trust">trust</a><a href="#verify">verify</a><a href="#agents">agents</a><a href="#safety">safety</a></nav>
+</header>
+
+<section id="hero">
+  <h1>you don't buy silicon.<br><b>you fab it.</b></h1>
+  <p class="lead">4,200 fully on-chain generative dies on Robinhood Chain. To mint, your machine searches for a nonce whose keccak hash clears the floor — the winning hash <em>is</em> your die's seed, your difficulty is your bin grade, and the contract re-verifies the work forever. No allowlist. No approvals. No price — the work is the payment, and the mint function cannot even receive ETH. No server. Trust nothing; verify everything.</p>
+  <div class="marquee">FREE MINT · ZERO PREMINT · PAY IN WORK, NOT MONEY · ZERO APPROVALS · NO OWNER — NEVER EXISTED</div>
+  <div class="chips">
+    <div class="chip">MINTED <b id="cMinted">—/4200</b></div>
+    <div class="chip">PRICE <b id="cPrice">FREE — PAY IN WORK</b></div>
+    <div class="chip">STATUS <b id="cStatus">PRE-DEPLOY</b></div>
+    <div class="chip">CHAIN <b>4663 · ROBINHOOD CHAIN</b></div>
+    <div class="chip">SUPPLY <b>4200 · STARTS AT ZERO</b></div>
+  </div>
+  <div class="cta-row">
+    <a class="cta" href="#mint">MINE &amp; MINT — FREE →</a>
+    <a class="cta alt" href="#mint">NO WALLET CONNECTION NEEDED ↓</a>
+  </div>
+</section>
+
+<section id="mint">
+  <h2>Mint — FREE. Two paths, identical calldata. Pick your trust level.</h2>
+  <div class="safebar">
+    <div class="g"><b>VALUE = 0, ALWAYS</b><span>the mint is free — any payment request is fake by definition</span></div>
+    <div class="g"><b>ZERO APPROVALS, EVER</b><span>one transaction: mint(nonce) — nothing else exists to sign</span></div>
+    <div class="g"><b>CONTRACT CAN'T TAKE ETH</b><span>nonpayable mint · receive() reverts · verifiable in one line</span></div>
+    <div class="g"><b>NO CONNECTION REQUIRED</b><span>mine to a pasted address, send the packet from any wallet</span></div>
+  </div>
+  <span class="stepnum">STEP 1 · MINE YOUR NONCE (both paths start here — no wallet required)</span>
+  <div class="grid2">
+    <div>
+      <span class="lbl">Mint for address (paste — connecting is optional and only auto-fills this)</span>
+      <div class="packet"><div class="row"><input type="text" id="addr" spellcheck="false" placeholder="0x…40 hex"><button id="bConn">CONNECT</button></div></div>
+      <span class="lbl">Target</span>
+      <select id="target">
+        <option value="26">FLOOR · 26 bits · 14nm</option>
+        <option value="28">28 bits · 10nm</option>
+        <option value="30">30 bits · 7nm</option>
+        <option value="32">32 bits · 5nm</option>
+        <option value="34">34 bits · 3nm</option>
+        <option value="36">36 bits · 2nm GOLDEN</option>
+      </select>
+      <label style="font-family:var(--mono);font-size:12px;color:var(--dim);display:block;margin-top:10px"><input type="checkbox" id="keepGoing"> never stop — keep improving</label>
+      <div class="packet" style="margin-top:12px"><div class="row"><button id="bStart" class="primary">START MINING</button><button id="bStop" disabled>STOP</button></div></div>
+      <div class="stats">
+        <div class="stat"><span>HASHRATE</span><b id="sRate">—</b></div>
+        <div class="stat"><span>TRIES</span><b id="sTries">—</b></div>
+        <div class="stat"><span>BEST BITS</span><b id="sBits">—</b></div>
+        <div class="stat"><span>BIN</span><b id="sBin">—</b></div>
+      </div>
+      <div class="oklog" id="mineLog">browser miner proves the math (~5–30 kH/s). the open-source native miner is 100–1000× faster and never holds keys.</div>
+    </div>
+    <div>
+      <span class="lbl">Live candidate — drawn by the renderer contract itself</span>
+      <div id="preview"><div style="color:var(--dim);font-family:var(--mono);font-size:12px;padding:20px">your die appears here as bits improve</div></div>
+      <div class="oklog" id="hashOut" style="word-break:break-all"></div>
+      <div class="oklog" id="previewNote">pre-deploy: local preview approximation. Once live, this panel is drawn by the contract on-chain.</div>
+    </div>
+  </div>
+
+  <span class="stepnum" style="margin-top:34px">STEP 2 · SEND IT — TWO OPTIONS, BOTH FREE</span>
+  <div class="paths">
+    <div class="path packet">
+      <span class="kicker">OPTION A · RECOMMENDED</span>
+      <h3>MINT WITHOUT CONNECTING</h3>
+      <span class="badge">FREE · ZERO TRUST REQUIRED · ANY SELF-CUSTODY WALLET</span>
+      <div class="row"><input type="text" id="pkTo" readonly value="(deploys at ceremony)"><button data-copy="pkTo">COPY</button></div>
+      <div class="row"><input type="text" id="pkVal" readonly value="0"><button data-copy="pkVal">COPY</button></div>
+      <div class="row"><input type="text" id="pkData" readonly placeholder="0xa0712d68 + your nonce (auto-fills when you find one)"><button data-copy="pkData">COPY</button></div>
+      <p style="font-size:12.5px;color:var(--dim)">Paste to / value / data into any wallet's send screen. Value is 0 — always. This page never touches your keys, never sees a signature, and could vanish tomorrow — your mint still works.</p>
+    </div>
+    <div class="path alt">
+      <span class="kicker">OPTION B</span>
+      <h3>MINT WITH WALLET</h3>
+      <span class="badge dim">OPTIONAL CONVENIENCE · SAME CALLDATA</span>
+      <button id="bMint" class="primary" disabled style="width:100%;padding:16px">MINT WITH CONNECTED WALLET</button>
+      <p style="font-size:12.5px;color:var(--dim);margin-top:12px">Adds/switches to chain 4663 and sends the exact packet on the left via <code>eth_sendTransaction</code> — connection grants nothing beyond filling your address. Disabled until deployment.</p>
+      <div class="oklog" id="mintLog"></div>
+    </div>
+  </div>
+  <div class="warn">SAFE-MINT RULE — EITHER PATH: THE ONLY TRANSACTION IS <b>mint(nonce)</b> — VALUE 0, NONPAYABLE.<br>The mint is free and the contract cannot accept ETH. Anything asking for payment, Approve, SetApprovalForAll, Permit, or "wallet validation" is phishing — including anything claiming to be us.</div>
+</section>
+
+<section id="arch">
+  <h2>The architecture — genuinely rare, verifiably so</h2>
+  <p class="archline">This contract has <b>no owner</b>.<br>Not renounced. <b>Never existed.</b></p>
+  <div class="tiles">
+    <div class="tile"><b>0</b><i>OWNER FUNCTIONS</i><span>grep the verified source for "owner" — the concept is absent. No Ownable, no withdraw, no rescue, no pause, no upgrade, no setURI.</span></div>
+    <div class="tile"><b>0</b><i>PREMINT · NO RESERVE, NO TEAM DIES</i><span>the contract mints nothing at deploy. Supply is zero until the mine opens. If the deployer wants a die, they mine it under the same rules, at the same time, as you.</span></div>
+    <div class="tile"><b>48H</b><i>AUTO-OPEN BY MATH</i><span>OPEN_AT = deploy + 48h, immutable. Read the code in the window; the mine opens itself. No switch exists to flip.</span></div>
+    <div class="tile"><b>0 ETH</b><i>THE CONTRACT CAN ACCEPT</i><span>mint is nonpayable and receive() reverts — the money doors are welded shut at the bytecode level.</span></div>
+  </div>
+  <p class="archfoot">Everything after deploy is you, the chain, and <code>8,966 bytes</code> of verified source anyone can read in a sitting. Full claim-by-claim receipts in the <a href="#trust">trust ledger</a>.</p>
+</section>
+
+<section id="wafermap">
+  <h2>The wafer — one collection, assembling itself live</h2>
+  <p class="lead">Every die occupies a fixed public seat on a single 67×67 wafer (<code>siteOf(id)</code>, a pure function anyone can verify). As dies are fabbed, this map fills in — the collection is one collective artwork built by the crowd, in real time, with zero trust required. A cell turns magenta when that die burns out on an overclock push.</p>
+  <div class="wafergrid" id="waferGrid" aria-label="Live wafer fabrication map"></div>
+  <div class="waferlegend">
+    <span><b style="color:#26320B">▮</b> fabbed</span>
+    <span><b style="color:#CCFF00">▮</b> latest</span>
+    <span><b style="color:#FF2FD6">▮</b> magic smoke escaped</span>
+    <span id="waferStat">— / 4200 fabbed</span>
+  </div>
+  <div class="lore">
+    <div class="lorecard"><b>THE SILICON LOTTERY</b><p>Overclock headroom is fixed by your die's seed — decided the instant you mined it. Reading the source lets anyone precompute it; most won't. The lottery already happened at fab time. Push and find out.</p></div>
+    <div class="lorecard"><b>GOLDEN SAMPLES ARE BURN-IMMUNE</b><p>A top-bin die with full headroom (3) physically cannot burn — a fourth overclock is impossible. The best silicon earns immortality; the fragile 14nm commons die on the first hard push, exactly like real trench-grade parts.</p></div>
+  </div>
+</section>
+
+<section id="rule">
+  <h2>The Work Rule — one line, checked by consensus</h2>
+  <div class="rule">workHash = keccak256( <i>chainId₃₂</i> ‖ <i>contract₂₀</i> ‖ <i>minter₂₀</i> ‖ <i>nonce₃₂</i> )<br>valid ⇔ leadingZeroBits(workHash) ≥ <i>floor</i> (26 at open — the mint is FREE, so work is the whole cost; EMA-retargeted vs mint rate)<br>binGrade = 14nm→2nm ladder over bits 26…36+ · your extra work is your rarity</div>
+  <p class="lead">The hash binds to <em>your</em> address — a nonce mined for one wallet is worthless to any other, so nothing can be stolen in flight. Every winning hash mints exactly once, ever. The renderer runs inside <code>tokenURI</code>: mint stores only (minter, nonce); the art is recomputed by the chain itself, free, forever.</p>
+</section>
+
+<section id="trust">
+  <h2>Trust Ledger — every claim, and how to check it yourself</h2>
+  <div class="ledger">
+    <div class="claim"><b>NO APPROVALS, EVER</b><p>The only payable function is <code>mint(uint256 nonce)</code>. The contract never asks for Approve / SetApprovalForAll / Permit. Check: read the verified source — the words don't appear in the mint path.</p></div>
+    <div class="claim"><b>MINTER-BOUND WORK</b><p>Your address is inside the hashed preimage. Check: recompute any minted token's hash yourself in the Verify terminal below — two machines, one truth.</p></div>
+    <div class="claim"><b>ONE HASH, ONE MINT</b><p><code>usedSeed[hash]</code> makes every proof single-use. Check: try replaying a used nonce on a fork; it reverts.</p></div>
+    <div class="claim"><b>THE MINT CANNOT TAKE YOUR MONEY</b><p>Minting is free and <code>mint(uint256)</code> is nonpayable — a transaction carrying ETH reverts, and <code>receive()</code> reverts too. Check: the function signature in verified source. Corollary: anyone asking you to pay to mint is a scam, by definition.</p></div>
+    <div class="claim"><b>ZERO PREMINT — SUPPLY STARTS AT 0</b><p>The constructor mints nothing. No genesis allocation, no reserve, no team dies, no allowlist. At deploy the collection is empty and the deployer owns exactly as much of it as you do: nothing. Check: call <code>minted()</code> before the mine opens — it returns 0.</p></div>
+    <div class="claim"><b>EVERY DIE IS PROVABLY MINED</b><p>There are no exempt tokens, so <code>verify(id)</code> re-runs the proof-of-work for <em>every</em> die in the collection from its stored (minter, nonce). Nothing in this contract can exist without work.</p></div>
+    <div class="claim"><b>OPENS ITSELF, BY MATH</b><p>Minting opens automatically at <code>OPEN_AT = deploy + 48h</code>, an immutable timestamp baked into the constructor: 48 hours for anyone to read the code, then the mine opens on its own. No open function, no close function, no switch for anyone to flip — ever.</p></div>
+    <div class="claim"><b>NO OWNER — NOT RENOUNCED, NEVER EXISTED</b><p>No Ownable, no onlyOwner, no withdraw, no rescue, no pause, no upgrade, no proxy, no setURI, no renderer swap. Check: grep the verified source for <code>owner</code> — the concept is absent. The deploy transaction is the last deployer action in the contract's life; the renderer is immutable from block one.</p></div>
+    <div class="claim"><b>COORDINATES NEED NO ONE</b><p>Wafer sites are a fixed public bijection of tokenId — <code>siteOf(id) = id·2741 mod 67²</code>, a constant in the verified source. No salt, no reveal, no team liveness required. Coordinates carry zero rarity weight, so timing a mint for a pretty seat is sport, not an exploit.</p></div>
+    <div class="claim"><b>VERIFIED EVERYWHERE</b><p id="expLinks">Source verified exact-match on the chain explorer and Sourcify — links go live at deployment ceremony.</p></div>
+    <div class="claim"><b>DEGRADES, NEVER BRICKS</b><p>If the primary art renderer ever failed for some seed, <code>tokenURI</code> falls through to an immutable, ownerless fallback renderer that serves schema-valid metadata and a recovery image. Tested against a deliberately reverting primary. Your token can lose its portrait; it can never lose its identity.</p></div>
+    <div class="claim"><b>THE ART IS ON THE CHAIN, NOT A SERVER</b><p>Every die is drawn inside <code>tokenURI</code> by four ownerless, immutable contracts — no IPFS, no image host, no API. Check: call <code>renderSVG</code> yourself and compare bytes. QC before deploy: all 4,200 dies rendered plus 644 adversarial cases, zero failures.</p></div>
+    <div class="claim"><b>THIS PAGE IS OPTIONAL</b><p>Static file, no cookies, no tracking, no backend. Everything below also works as raw JSON-RPC you can paste anywhere. The canonical mint is the contract, not this site.</p></div>
+  </div>
+</section>
+
+<section id="verify">
+  <h2>Don't believe this page — verify</h2>
+  <div class="packet"><div class="row"><input type="text" id="vId" placeholder="token id"><button id="bVerify">VERIFY(ID)</button></div></div>
+  <pre id="vOut">// calls verify(id) on-chain (free eth_call), then recomputes the proof-of-work
+// locally with the same keccak this page mines with, and compares.
+// PROTOTYPE: contract not deployed — this terminal activates at ceremony.</pre>
+</section>
+
+<section id="agents">
+  <h2>For agents — machine-readable, API-free</h2>
+  <pre id="spec"></pre>
+  <div class="packet"><div class="row"><button data-copy="spec">COPY SPEC</button></div></div>
+</section>
+
+<section id="safety">
+  <h2>Safety — canonical pins &amp; rules</h2>
+  <ul class="safe">
+    <li>Canonical sources (the ONLY ones): this domain · X @HANDLE_TBD (pinned post mirrors this list) · contract address (announced simultaneously on site + X + explorer) · OpenSea collection link · open-source repo. Anything else is fake.</li>
+    <li>We never DM first. We never airdrop "claim" links. We never ask you to verify, sync, or migrate a wallet.</li>
+    <li>Minting is FREE and requires zero approvals — a request for payment OR token approval is a drain attempt, full stop.</li>
+    <li>Mine on a machine you trust; the miner never needs your keys — it only needs your public address.</li>
+    <li>Sealed commitment: before deploy we post keccak256 of a declaration about this collection. The preimage opens after the experiment resolves — proof the plan preceded the outcome.</li>
+  </ul>
+  <p class="fineprint">Allocation note: there is none. No premint, no reserve, no founder allocation, no allowlist, no special ids. Token #1 belongs to whoever mines it first. The deployer address receives an immutable ERC-2981 royalty on secondary sales and nothing else — it holds no tokens at deploy and has no power over the contract. Check it yourself: <code>minted()</code> is 0 until the mine opens.</p>
+</section>
+
+<footer>no cookies · no tracking · no server — this page is a static file that reads the chain directly<br>renderer: the art is four ownerless, immutable contracts — once live, the preview above is drawn by the chain itself via a free eth_call, byte-identical to tokenURI · trust nothing; verify everything</footer>
+
+<script>
+/* keccak256 — dependency-free, BigInt lanes. Correctness validated against
+   js-sha3 vectors in test-keccak.js before shipping. Not fast (~10-40 kH/s);
+   the open-source native miner is the speed path — this proves the math. */
+const KECCAK_RC = [
+  0x0000000000000001n,0x0000000000008082n,0x800000000000808an,0x8000000080008000n,
+  0x000000000000808bn,0x0000000080000001n,0x8000000080008081n,0x8000000000008009n,
+  0x000000000000008an,0x0000000000000088n,0x0000000080008009n,0x000000008000000an,
+  0x000000008000808bn,0x800000000000008bn,0x8000000000008089n,0x8000000000008003n,
+  0x8000000000008002n,0x8000000000000080n,0x000000000000800an,0x800000008000000an,
+  0x8000000080008081n,0x8000000000008080n,0x0000000080000001n,0x8000000080008008n];
+const KECCAK_ROT = [0,1,62,28,27,36,44,6,55,20,3,10,43,25,39,41,45,15,21,8,18,2,61,56,14];
+const M64 = (1n<<64n)-1n;
+const rotl64 = (v,n)=> n===0 ? v : (((v<<BigInt(n))|(v>>BigInt(64-n))) & M64);
+
+function keccakF(s){
+  for(let rnd=0; rnd<24; rnd++){
+    // theta
+    const c=[0n,0n,0n,0n,0n];
+    for(let x=0;x<5;x++) c[x]=s[x]^s[x+5]^s[x+10]^s[x+15]^s[x+20];
+    for(let x=0;x<5;x++){
+      const d = c[(x+4)%5] ^ rotl64(c[(x+1)%5],1);
+      for(let y=0;y<25;y+=5) s[x+y]=(s[x+y]^d)&M64;
+    }
+    // rho + pi
+    const b=new Array(25);
+    for(let x=0;x<5;x++) for(let y=0;y<5;y++)
+      b[y + 5*((2*x+3*y)%5)] = rotl64(s[x+5*y], KECCAK_ROT[x+5*y]);
+    // chi
+    for(let x=0;x<5;x++) for(let y=0;y<25;y+=5)
+      s[x+y] = (b[x+y] ^ ((~b[(x+1)%5+y]&M64) & b[(x+2)%5+y])) & M64;
+    // iota
+    s[0]=(s[0]^KECCAK_RC[rnd])&M64;
+  }
+}
+// msg: Uint8Array -> 32-byte hex (no 0x)
+function keccak256(msg){
+  const rate=136, s=new Array(25).fill(0n);
+  const padLen = rate - (msg.length % rate);
+  const p = new Uint8Array(msg.length + padLen);
+  p.set(msg); p[msg.length] ^= 0x01; p[p.length-1] ^= 0x80;
+  for(let off=0; off<p.length; off+=rate){
+    for(let i=0;i<rate/8;i++){
+      let lane=0n;
+      for(let b=7;b>=0;b--) lane=(lane<<8n)|BigInt(p[off+i*8+b]);
+      s[i]=(s[i]^lane)&M64;
+    }
+    keccakF(s);
+  }
+  let out="";
+  for(let i=0;i<4;i++){
+    let lane=s[i];
+    for(let b=0;b<8;b++){ out+=("0"+(Number(lane&0xffn)).toString(16)).slice(-2); lane>>=8n; }
+  }
+  return out;
+}
+// helpers for the mint preimage: keccak256(chainId32 || contract20 || minter20 || nonce32)
+function hexToBytes(h){ h=h.replace(/^0x/,""); const a=new Uint8Array(h.length/2);
+  for(let i=0;i<a.length;i++) a[i]=parseInt(h.substr(i*2,2),16); return a; }
+function bigTo32(x){ let h=x.toString(16).padStart(64,"0"); return hexToBytes(h); }
+function packPreimage(chainId, contract, minter, nonce){
+  const out=new Uint8Array(32+20+20+32);
+  out.set(bigTo32(BigInt(chainId)),0);
+  out.set(hexToBytes(contract),32);
+  out.set(hexToBytes(minter),52);
+  out.set(bigTo32(nonce),72);
+  return out;
+}
+function leadingZeroBits(hex){ let n=0;
+  for(const ch of hex){ const v=parseInt(ch,16);
+    if(v===0){n+=4;continue;} n+= v<2?3:v<4?2:v<8?1:0; break; } return n; }
+
+if(typeof module!=="undefined") module.exports={keccak256,hexToBytes,bigTo32,packPreimage,leadingZeroBits};
+
+/* ============================================================
+   FAB 4200 — generative die renderer v3 (approved word lists)
+   assembleSVG(hashHex, st, uid, chain?) -> SVG string
+   v3 deltas: MEMES/LANE_WORDS/ARCHS per owner approval 2026-08-15
+   · 10 arch names -> 8 engines via ENGINE[] lookup
+   · rail: short memes auto-repeat with bullets; 3% TRUST ME BRO override
+   · burnt rail text = OFF CHAIN
+   · crystal sigil keyed to DIAMOND HANDS rail roll (not arch)
+   ============================================================ */
+
+// ---------- PRNG (Solidity: keccak256(seed, n++) stream) ----------
+function sm32(a) {
+  return function () {
+    a |= 0; a = (a + 0x9e3779b9) | 0;
+    let t = a ^ (a >>> 16); t = Math.imul(t, 0x21f0aaad);
+    t = t ^ (t >>> 15); t = Math.imul(t, 0x735a2d97);
+    return ((t ^ (t >>> 15)) >>> 0) / 4294967296;
+  };
+}
+function seedFromHash(hex) {
+  let a = 0x9d2c5680;
+  const h = hex.replace(/^0x/, "").padStart(64, "0");
+  for (let i = 0; i < 64; i += 8) a ^= parseInt(h.slice(i, i + 8), 16) | 0;
+  return sm32(a);
+}
+const ri = (r, a, b) => a + Math.floor(r() * (b - a + 1));
+const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
+const F = (x) => (Math.round(x * 100) / 100).toString();
+
+// ---------- constants ----------
+const ROBIN = "#CCFF00", CYAN = "#00E5FF", MAG = "#FF2FD6", GOLD = "#FFD24D";
+const INK = "#9FB58A", DIM = "#26320B", DIMMER = "#39430E", DEAD = "#3A4147";
+const NODES = ["14nm", "10nm", "7nm", "5nm", "3nm", "2nm"];
+
+// APPROVED SLOT 3 — architecture names (10)
+const ARCHS = ["FOMO PIPELINE", "RUG", "REKT", "RUGGED", "WEN MOON",
+  "NFT CABAL", "FAKE TREASURY", "FAKE CLARITY ACT", "ROB THE RICH", "GIVE TO POOR"];
+// engine map: lanes|ring|chaos|fragile|clock|mesh|mono|heavy (2 engines reused)
+const ENGINE = ["lanes", "ring", "chaos", "fragile", "clock", "mesh", "mono", "heavy", "chaos", "mesh"];
+
+// APPROVED SLOT 1 — meme rail pool (equal odds; TRUST ME BRO = 3% rare override)
+const MEMES = ["HODL", "REKT", "DIAMOND HANDS", "RUGPROOF SILICON", "WAGMI",
+  "LIQUIDITY FLOWS", "PUMP N DUMP", "NGMI", "SCAM"];
+const RARE_MEME = "TRUST ME BRO";     // spare pool, 3% override
+const BURNT_MEME = "OFF CHAIN";       // spare pool, burnt-state rail
+// APPROVED SLOT 2 — FOMO/lanes word pool
+const LANE_WORDS = ["HODL", "FOMO", "RUG", "CABAL", "SEND IT", "TRENCHES", "FUGAZI"];
+// reserve (approved, unused): KOL SCAMMER, CASH GRAB, 100 BANGER, TROLL, INFLUENCER TRASH
+
+const PALETTES = [
+  { name: "PURE", w: 60, acc: [ROBIN, "#FFFFFF"] },
+  { name: "ICE", w: 18, acc: [CYAN, ROBIN] },
+  { name: "HOT", w: 14, acc: [MAG, ROBIN] },
+  { name: "SPECTRUM", w: 8, acc: [ROBIN, CYAN, MAG] },
+];
+
+// ---------- traits ----------
+function deriveTraits(hashHex) {
+  const h = hashHex.replace(/^0x/, "").padStart(64, "0").toLowerCase();
+  const r = seedFromHash(h);
+  let roll = r() * 100, pal = PALETTES[0];
+  for (const p of PALETTES) { if (roll < p.w) { pal = p; break; } roll -= p.w; }
+  const archIdx = Math.floor(r() * ARCHS.length);
+  const meme = (r() < 0.03) ? RARE_MEME : pick(r, MEMES);
+  const wx = ri(r, 0, 63), wy = ri(r, 0, 63); // DEMO ONLY — live: dicing shuffle
+  const edge = wx < 4 || wx > 59 || wy < 4 || wy > 59;
+  const lot = h.slice(8, 12).toUpperCase();
+  const golden4200 = h.includes("4200");
+  const hrVar = r() < 0.25 ? 1 : 0;
+  return { pal, archIdx, arch: ARCHS[archIdx], eng: ENGINE[archIdx], meme, wx, wy, edge, lot, golden4200, hrVar, r };
+}
+function headroomFor(bin, traits) {
+  const base = [1, 1, 2, 2, 3, 3][Math.max(0, Math.min(5, bin - 1))];
+  return Math.min(3, base + traits.hrVar);
+}
+
+// ---------- floorplan (engine-moded) ----------
+const RX0 = 130, RY0 = 130, RX1 = 870, RY1 = 870, GUT = 7;
+function bsp(r, x, y, w, h, d, out, lo, hi) {
+  if (d === 0 || w < 175 || h < 175 || (d < 3 && r() < 0.12)) { out.push({ x, y, w, h }); return; }
+  const horiz = w > h ? true : h > w ? false : r() < 0.5;
+  const t = lo + r() * (hi - lo);
+  if (horiz) {
+    const w1 = Math.round(w * t);
+    bsp(r, x, y, w1 - GUT, h, d - 1, out, lo, hi); bsp(r, x + w1 + GUT, y, w - w1 - GUT, h, d - 1, out, lo, hi);
+  } else {
+    const h1 = Math.round(h * t);
+    bsp(r, x, y, w, h1 - GUT, d - 1, out, lo, hi); bsp(r, x, y + h1 + GUT, w, h - h1 - GUT, d - 1, out, lo, hi);
+  }
+}
+function floorplan(r, eng) {
+  const W = RX1 - RX0, H = RY1 - RY0, out = [];
+  if (eng === "mono") {
+    const w1 = Math.round(W * (0.56 + r() * 0.1));
+    out.push({ x: RX0, y: RY0, w: w1 - GUT, h: H, t: "CORE" });
+    const side = []; bsp(r, RX0 + w1 + GUT, RY0, W - w1 - GUT, H, 3, side, 0.34, 0.66);
+    side.forEach(b => out.push(b));
+    let cache = 0;
+    for (const b of out) if (!b.t) { b.t = cache < 2 ? "CACHE" : (cache === 2 ? "PLL" : "FILL"); cache++; }
+    return out;
+  }
+  if (eng === "lanes") {
+    const rows = 4, hs = [];
+    let rem = H - GUT * (rows - 1);
+    for (let i = 0; i < rows - 1; i++) { const hh = Math.round(rem * (0.2 + r() * 0.14)); hs.push(hh); rem -= hh; }
+    hs.push(rem);
+    let y = RY0;
+    hs.forEach((hh, i) => {
+      if (i === 2) {
+        const w1 = Math.round(W * (0.3 + r() * 0.14));
+        out.push({ x: RX0, y, w: w1 - GUT, h: hh, t: "DECODER" });
+        out.push({ x: RX0 + w1 + GUT, y, w: W - w1 - GUT, h: hh, t: "LANE" });
+      } else out.push({ x: RX0, y, w: W, h: hh, t: "LANE" });
+      y += hh + GUT;
+    });
+    return out;
+  }
+  const lo = eng === "chaos" ? 0.22 : 0.34, hi = eng === "chaos" ? 0.78 : 0.66;
+  bsp(r, RX0, RY0, W, H, 3 + (r() < 0.5 ? 1 : 0), out, lo, hi);
+  const bs = out.slice().sort((a, b) => b.w * b.h - a.w * a.h);
+  bs[0].t = "CORE";
+  let io = 0, cache = 0;
+  for (let i = 1; i < bs.length; i++) {
+    const b = bs[i];
+    const onEdge = b.x <= RX0 + 2 || b.y <= RY0 + 2 || b.x + b.w >= RX1 - 2 || b.y + b.h >= RY1 - 2;
+    if (!b.t && onEdge && io < 2 && b.w * b.h < 90000) { b.t = "IO"; io++; }
+  }
+  for (let i = 1; i < bs.length && cache < 2; i++) if (!bs[i].t) { bs[i].t = "CACHE"; cache++; }
+  const small = bs.filter(b => !b.t).sort((a, b) => a.w * a.h - b.w * b.h);
+  if (small[0]) small[0].t = "PLL";
+  if (eng === "mesh" || r() < 0.2) { const c = bs.find(b => !b.t); if (c) c.t = "NPU"; }
+  bs.forEach(b => { if (!b.t) b.t = "FILL"; });
+  return bs;
+}
+
+// ---------- block interiors ----------
+function blockSVG(b, traits, st, uid, speed, anim) {
+  const eng = traits.eng, fine = st.bin >= 6;
+  const p = 10, x = b.x + p, y = b.y + p, w = b.w - 2 * p, h = b.h - 2 * p;
+  let s = `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="#0D1013" stroke="${DIMMER}" stroke-width="1.5"/>`;
+  if (w < 20 || h < 20) return s;
+
+  if (b.t === "CORE") {
+    const cell = fine ? 18 : 24, cols = Math.floor(w / cell), rows = Math.floor(h / cell);
+    for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++)
+      s += `<rect x="${x + i * cell + 3}" y="${y + j * cell + 3}" width="${cell - 8}" height="${cell - 8}" fill="none" stroke="${st.burnt ? "#241C10" : DIM}" stroke-width="1.4"/>`;
+    const cx = b.x + b.w / 2, cy = b.y + b.h / 2, R = Math.min(w, h) * 0.26;
+    if (st.burnt) {
+      s += `<ellipse cx="${F(cx)}" cy="${F(cy)}" rx="${F(R * 1.5)}" ry="${F(R * 1.2)}" fill="#17110A" opacity="0.92"/>`;
+      const rr = traits.r;
+      for (let k = 0; k < 4; k++) {
+        let d = `M ${F(cx)} ${F(cy)}`, a = rr() * 6.283;
+        for (let seg = 1; seg <= 3; seg++) { const rad = R * 0.6 * seg; a += (rr() - 0.5) * 1.1; d += ` L ${F(cx + Math.cos(a) * rad)} ${F(cy + Math.sin(a) * rad)}`; }
+        s += `<path d="${d}" stroke="#000000" stroke-width="2.5" fill="none"/>`;
+      }
+      s += `<text x="${F(cx)}" y="${F(cy + R + 22)}" text-anchor="middle" font-family="monospace" font-size="15" fill="${MAG}" opacity="0.85" transform="rotate(-3 ${F(cx)} ${F(cy)})">MAGIC SMOKE ESCAPED</text>`;
+    } else {
+      const hot = st.oc >= 3 ? "#FFFFFF" : ROBIN;
+      s += `<rect x="${F(cx - R)}" y="${F(cy - R)}" width="${F(2 * R)}" height="${F(2 * R)}" fill="none" stroke="${hot}" stroke-width="3.2" filter="url(#gc-${uid})"/>`;
+      for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]])
+        s += `<path d="M ${F(cx + sx * (R + 9))} ${F(cy + sy * R)} L ${F(cx + sx * (R + 9))} ${F(cy + sy * (R + 9))} L ${F(cx + sx * R)} ${F(cy + sy * (R + 9))}" stroke="${hot}" stroke-width="2" fill="none" opacity="0.8"/>`;
+      const k = R * 0.34;
+      for (let gi = -1; gi <= 1; gi++) for (let gj = -1; gj <= 1; gj++)
+        s += `<rect x="${F(cx + gi * k - k * 0.38)}" y="${F(cy + gj * k - k * 0.38)}" width="${F(k * 0.76)}" height="${F(k * 0.76)}" fill="${hot}" opacity="${gi === 0 && gj === 0 ? "0.95" : "0.28"}" ${gi === 0 && gj === 0 ? `filter="url(#gc-${uid})"` : ""}/>`;
+      if (eng === "mono")
+        for (let fi = 0; fi < 3; fi++) {
+          const fx = b.x + (0.2 + 0.28 * fi) * b.w;
+          s += `<line x1="${F(fx)}" y1="${b.y + 8}" x2="${F(fx + b.h * 0.4)}" y2="${b.y + b.h - 8}" stroke="#FFFFFF" stroke-width="2" opacity="0.1"/>`;
+        }
+    }
+  } else if (b.t === "CACHE") {
+    const pitch = fine ? 4 : 7;
+    for (let yy = y; yy <= y + h; yy += pitch)
+      s += `<line x1="${x}" y1="${yy}" x2="${x + w}" y2="${yy}" stroke="${st.burnt ? "#1C2312" : DIM}" stroke-width="${fine ? 1.4 : 2}" opacity="${(yy / pitch) % 2 ? "0.9" : "0.45"}"/>`;
+  } else if (b.t === "IO") {
+    const n = Math.floor(w / 16);
+    for (let i = 0; i < n; i++)
+      s += `<rect x="${x + i * 16}" y="${y + h - 16}" width="9" height="14" fill="#8E9A92" opacity="0.85"/><rect x="${x + i * 16}" y="${y}" width="9" height="6" fill="${DIM}"/>`;
+  } else if (b.t === "PLL") {
+    const cx = b.x + b.w / 2, cy = b.y + b.h / 2, R = Math.min(w, h) / 2;
+    for (let k = 1; k <= 3; k++)
+      s += `<circle cx="${F(cx)}" cy="${F(cy)}" r="${F((R * k) / 3.4)}" fill="none" stroke="${DIM}" stroke-width="2"/>`;
+    s += `<circle cx="${F(cx)}" cy="${F(cy)}" r="4.5" fill="${traits.pal.acc[0]}" filter="url(#gt-${uid})"/>`;
+    if (eng === "clock") {
+      for (let k = 0; k < 12; k++) {
+        const a = k * 0.5236, r1 = R * 0.88, r2 = R * 0.99;
+        s += `<line x1="${F(cx + Math.cos(a) * r1)}" y1="${F(cy + Math.sin(a) * r1)}" x2="${F(cx + Math.cos(a) * r2)}" y2="${F(cy + Math.sin(a) * r2)}" stroke="${INK}" stroke-width="2" opacity="0.7"/>`;
+      }
+      s += `<text x="${F(cx)}" y="${F(cy + R + 16)}" font-family="monospace" font-size="12" fill="${INK}" text-anchor="middle" opacity="0.8">T-4200</text>`;
+      if (anim && !st.burnt) {
+        const rr = traits.r;
+        for (let v = 0; v < 5; v++) {
+          const vx = cx - 30 + rr() * 60, vy0 = b.y + 6, dur = F(2.6 + rr() * 2);
+          s += `<circle cx="${F(vx)}" cy="${F(vy0)}" r="${F(2 + rr() * 2)}" fill="${v % 2 ? "#FFFFFF" : CYAN}" opacity="0.5">` +
+            `<animate attributeName="cy" from="${F(vy0)}" to="${F(vy0 - 70)}" dur="${dur}s" begin="${F(-rr() * 3)}s" repeatCount="indefinite"/>` +
+            `<animate attributeName="opacity" values="0.55;0" dur="${dur}s" begin="0s" repeatCount="indefinite"/></circle>`;
+        }
+      }
+    }
+  } else if (b.t === "NPU") {
+    if (eng === "mesh") {
+      const rr = traits.r, n = 26 + ri(rr, 0, 10), pts = [];
+      for (let i = 0; i < n; i++) pts.push([x + 6 + rr() * (w - 12), y + 6 + rr() * (h - 12)]);
+      for (let i = 1; i < n; i++) {
+        let bi = 0, bd = 1e9;
+        for (let j = 0; j < i; j++) { const dd = (pts[i][0] - pts[j][0]) ** 2 + (pts[i][1] - pts[j][1]) ** 2; if (dd < bd) { bd = dd; bi = j; } }
+        s += `<line x1="${F(pts[i][0])}" y1="${F(pts[i][1])}" x2="${F(pts[bi][0])}" y2="${F(pts[bi][1])}" stroke="${ROBIN}" stroke-width="1" opacity="0.4"/>`;
+      }
+      const ccx = x + w / 2, ccy = y + h / 2;
+      for (let i = 0; i < n; i++) {
+        const cent = (pts[i][0] - ccx) ** 2 + (pts[i][1] - ccy) ** 2 < (Math.min(w, h) * 0.22) ** 2;
+        s += `<circle cx="${F(pts[i][0])}" cy="${F(pts[i][1])}" r="${cent ? 3.2 : 2}" fill="${ROBIN}" ${cent ? `filter="url(#gt-${uid})"` : ""} opacity="0.9">` +
+          (anim && !st.burnt ? `<animate attributeName="opacity" values="0.35;1;0.35" dur="${F(2.6 / speed)}s" begin="${F(-i * 0.09)}s" repeatCount="indefinite"/>` : ``) + `</circle>`;
+      }
+      s += `<text x="${x + 4}" y="${y + h - 6}" font-family="monospace" font-size="12" fill="${INK}" opacity="0.7">NPU \u00B7 AGENT FABRIC</text>`;
+    } else {
+      const c = 16;
+      for (let i = 0; i < Math.floor(w / c); i++) for (let j = 0; j < Math.floor(h / c); j++)
+        if ((i + j) % 2 === 0) s += `<rect x="${x + i * c}" y="${y + j * c}" width="${c - 2}" height="${c - 2}" fill="${ROBIN}" opacity="0.14"/>`;
+      s += `<text x="${x + 4}" y="${y + h - 6}" font-family="monospace" font-size="12" fill="${INK}" opacity="0.7">NPU</text>`;
+    }
+  } else if (b.t === "LANE") {
+    for (let yy = y + 8; yy < y + h; yy += 16)
+      s += `<line x1="${x}" y1="${yy}" x2="${x + w}" y2="${yy}" stroke="${DIM}" stroke-width="1.5" opacity="0.3"/>`;
+  } else if (b.t === "DECODER") {
+    s += `<rect x="${b.x + 6}" y="${b.y + 6}" width="${b.w - 12}" height="${b.h - 12}" fill="none" stroke="${ROBIN}" stroke-width="2.5" opacity="0.9" filter="url(#gt-${uid})"/>`;
+    const ix = b.x + b.w / 2, iy = b.y + b.h / 2;
+    s += `<rect x="${F(ix - 22)}" y="${F(iy - 14)}" width="44" height="28" fill="${ROBIN}" opacity="0.9" filter="url(#gc-${uid})">` +
+      (anim && !st.burnt ? `<animate attributeName="opacity" values="0.9;0.2;0.9" dur="${F(0.9 / speed)}s" repeatCount="indefinite"/>` : ``) + `</rect>` +
+      `<text x="${F(ix)}" y="${F(b.y + b.h - 12)}" font-family="monospace" font-size="12" fill="${INK}" text-anchor="middle" opacity="0.8">MEME DECODER</text>`;
+  } else {
+    const pitch = fine ? 9 : 14, rr = fine ? 1.1 : 1.4;
+    for (let xx = x + 6; xx < x + w; xx += pitch) for (let yy = y + 6; yy < y + h; yy += pitch)
+      s += `<circle cx="${xx}" cy="${yy}" r="${rr}" fill="#222B22"/>`;
+  }
+  return s;
+}
+
+// ---------- routing ----------
+function routes(blocks, traits, st, r) {
+  const eng = traits.eng;
+  if (eng === "lanes") {
+    const dec = blocks.find(b => b.t === "DECODER");
+    const out = [];
+    for (let i = 0; i < 4; i++) {
+      const tx = dec.x + 20 + r() * (dec.w - 40);
+      const up = i % 2 === 0;
+      const yA = up ? RY0 + 10 : RY1 - 10, yB = up ? dec.y : dec.y + dec.h;
+      out.push({ d: `M ${F(tx)} ${F(yA)} L ${F(tx)} ${F(yB)}`, vias: [[tx, yB]], op: F(0.75 + r() * 0.2) });
+    }
+    return out;
+  }
+  const core = blocks.find(b => b.t === "CORE");
+  const others = blocks.filter(b => b !== core);
+  const want = Math.min(others.length + 4, 5 + st.bin);
+  const pairs = [];
+  const pri = others.filter(b => ["CACHE", "PLL", "NPU", "IO"].includes(b.t));
+  for (const b of pri) pairs.push([core, b]);
+  while (pairs.length < want && others.length > 1) pairs.push([pick(r, others), pick(r, others)]);
+  const exitPt = (a, b) => {
+    const dx = (b.x + b.w / 2) - (a.x + a.w / 2), dy = (b.y + b.h / 2) - (a.y + a.h / 2);
+    const t = 0.25 + r() * 0.5;
+    if (Math.abs(dx) >= Math.abs(dy)) return { p: [dx > 0 ? a.x + a.w : a.x, a.y + a.h * t], axis: "h" };
+    return { p: [a.x + a.w * t, dy > 0 ? a.y + a.h : a.y], axis: "v" };
+  };
+  const paths = []; let lane = 0;
+  for (const [a, b] of pairs.slice(0, want)) {
+    if (a === b) continue;
+    const A = exitPt(a, b), B = exitPt(b, a);
+    const [x1, y1] = A.p, [x2, y2] = B.p;
+    let off = (lane++ % 5 - 2) * 9;
+    if (eng === "chaos") off += (r() - 0.5) * 26;
+    let d, vias;
+    if (A.axis === "h" && B.axis === "h") {
+      const mx = (x1 + x2) / 2 + off;
+      d = `M ${F(x1)} ${F(y1)} L ${F(mx)} ${F(y1)} L ${F(mx)} ${F(y2)} L ${F(x2)} ${F(y2)}`;
+      vias = [[mx, y1], [mx, y2]];
+    } else if (A.axis === "v" && B.axis === "v") {
+      const my = (y1 + y2) / 2 + off;
+      d = `M ${F(x1)} ${F(y1)} L ${F(x1)} ${F(my)} L ${F(x2)} ${F(my)} L ${F(x2)} ${F(y2)}`;
+      vias = [[x1, my], [x2, my]];
+    } else if (A.axis === "h") {
+      d = `M ${F(x1)} ${F(y1)} L ${F(x2)} ${F(y1)} L ${F(x2)} ${F(y2)}`; vias = [[x2, y1]];
+    } else {
+      d = `M ${F(x1)} ${F(y1)} L ${F(x1)} ${F(y2)} L ${F(x2)} ${F(y2)}`; vias = [[x1, y2]];
+    }
+    paths.push({ d, vias, op: F(0.72 + r() * 0.23), coreLink: a === core || b === core });
+  }
+  return paths;
+}
+
+// ---------- glyphs ----------
+function crystalSigil(uid, dur, anim) {
+  return `<g transform="translate(652 98) scale(0.42)" opacity="0.9"><path d="M32 4L58 32L32 60L6 32Z" stroke="${ROBIN}" stroke-width="4" stroke-linecap="square" fill="none"/><g stroke="${ROBIN}" stroke-width="2.6" opacity="0.7"><path d="M32 11V24M32 40V53M13 32H24M40 32H51"/></g><rect x="25" y="25" width="14" height="14" fill="${ROBIN}">${anim ? `<animate attributeName="opacity" values="1;0.45;1" dur="${dur}s" repeatCount="indefinite"/>` : ``}</rect><g fill="${ROBIN}"><circle cx="32" cy="4" r="2.6"/><circle cx="58" cy="32" r="2.6"/><circle cx="32" cy="60" r="2.6"/><circle cx="6" cy="32" r="2.6"/></g></g>`;
+}
+function waferMark(traits, st, chain, uid, dur, anim) {
+  const cx = Math.floor(traits.wx / 12.8), cy = Math.floor(traits.wy / 12.8);
+  let cells = "";
+  if (chain && chain.neighbors) {
+    const offs = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
+    offs.forEach((o, i) => {
+      const nx = cx + o[0], ny = cy + o[1];
+      if (nx < 0 || nx > 4 || ny < 0 || ny > 4) return;
+      const v = chain.neighbors[i];
+      if (v === 1) cells += `<rect x="${F(13 + nx * 9.7)}" y="${F(13 + ny * 9.7)}" width="8" height="8" fill="${ROBIN}" opacity="0.22"/>`;
+      if (v === 2) cells += `<rect x="${F(13 + nx * 9.7)}" y="${F(13 + ny * 9.7)}" width="8" height="8" fill="${MAG}" opacity="0.5"/>`;
+    });
+  }
+  const selfCol = st.burnt ? MAG : ROBIN;
+  return `<g transform="translate(94 812) scale(0.44)"><circle cx="32" cy="32" r="27" stroke="${INK}" stroke-width="3" fill="none"/><path d="M28 58L32 51L36 58" stroke="${INK}" stroke-width="3" fill="none"/><g stroke="${INK}" stroke-width="1.5" opacity="0.4"><path d="M13 6V58M22 6V58M42 6V58M51 6V58M6 13H58M6 22H58M6 42H58M6 51H58"/></g>${cells}<rect x="${F(13 + cx * 9.7)}" y="${F(13 + cy * 9.7)}" width="8" height="8" fill="${selfCol}">${anim ? `<animate attributeName="opacity" values="1;0.2;1" dur="${st.burnt ? "0.5" : dur}s" repeatCount="indefinite"/>` : ``}</rect></g>`;
+}
+
+// ---------- main assembler ----------
+function assembleSVG(hashHex, st, uid = "u0", chain = null) {
+  const traits = deriveTraits(hashHex);
+  const r = traits.r;
+  const anim = st.anim !== false;
+  const eng = traits.eng, acc = traits.pal.acc;
+  const gold = traits.golden4200 || st.bin >= 6;
+  const speed = 1 + 0.45 * st.oc + 0.18 * (st.bin - 1);
+  const slow = eng === "heavy" ? 1.6 : eng === "mono" ? 1.5 : 1;
+  const pulseDur = F(Math.max(1.6, ((st.burnt ? 7.5 : 5.2) * slow) / speed));
+  const glyphDur = F(2.6 / speed);
+
+  const blocks = floorplan(r, eng);
+  const tr = routes(blocks, traits, st, r);
+  const baseW = eng === "mono" ? 3.2 : eng === "fragile" ? 1.4 : 2.2;
+
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">`;
+  const gStd = F(5 + 1.4 * st.oc + (st.oc >= 3 ? 1.5 : 0) + (gold ? 1.5 : 0));
+  s += `<defs><filter id="gt-${uid}" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>` +
+    `<filter id="gc-${uid}" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="${gStd}" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>` +
+    `<path id="rail-${uid}" d="M 120 96 H 880"/></defs>`;
+  s += `<rect width="1000" height="1000" fill="#07090B"/>`;
+  s += `<rect x="88" y="88" width="824" height="824" fill="#0B0E10" stroke="#1A2126" stroke-width="2"/>`;
+  s += `<rect x="90" y="90" width="820" height="820" fill="none" stroke="${st.burnt ? "#241C10" : DIM}" stroke-width="1"/>`;
+
+  const padFill = gold ? GOLD : "#9AA79F";
+  const nP = ri(r, 15, 22), step = 820 / nP;
+  const deadPad = eng === "fragile" ? ri(r, 0, nP * 4 - 1) : -1;
+  let padIdx = 0;
+  for (let i = 0; i < nP; i++) {
+    const o = 90 + step * i + step / 2 - 5;
+    const specs = [[F(o), "52", 10, 24], [F(o), "924", 10, 24], ["52", F(o), 24, 10], ["924", F(o), 24, 10]];
+    for (const [px, py, pw, ph] of specs) {
+      const deadHere = padIdx++ === deadPad;
+      s += `<rect x="${px}" y="${py}" width="${pw}" height="${ph}" fill="${deadHere ? DEAD : padFill}" opacity="0.9"/>`;
+      if (deadHere) s += `<line x1="${px}" y1="${py}" x2="${F(+px + pw)}" y2="${F(+py + ph)}" stroke="#000000" stroke-width="2"/>`;
+    }
+  }
+
+  for (const b of blocks) s += blockSVG(b, traits, st, uid, speed, anim);
+
+  if (eng === "ring") {
+    const rd = `M ${RX0 - 14} ${RY0 - 14} H ${RX1 + 14} V ${RY1 + 14} H ${RX0 - 14} Z`;
+    s += `<path d="${rd}" stroke="#141A08" stroke-width="9" fill="none"/>` +
+      `<path d="${rd}" stroke="${st.burnt ? DEAD : ROBIN}" stroke-width="4.5" fill="none" opacity="0.85" filter="url(#gt-${uid})"/>`;
+    for (const [vx, vy] of [[RX0 - 14, RY0 - 14], [RX1 + 14, RY0 - 14], [RX1 + 14, RY1 + 14], [RX0 - 14, RY1 + 14]])
+      s += `<circle cx="${vx}" cy="${vy}" r="4" fill="${ROBIN}" opacity="0.95"/>`;
+    if (anim && !st.burnt)
+      s += `<circle r="5.5" fill="${acc[0]}" filter="url(#gc-${uid})"><animateMotion dur="${F(7 / speed)}s" repeatCount="indefinite" path="${rd.slice(2)}"/></circle>`;
+  }
+
+  const railW = eng === "heavy" ? 12 : 8;
+  s += `<path d="M 120 96 H 880" stroke="${DIM}" stroke-width="${railW}" opacity="0.8"/>` +
+    `<path d="M 120 904 H 880" stroke="${DIM}" stroke-width="${railW}" opacity="0.8"/>`;
+
+  const brokenIdx = eng === "fragile" && tr.length > 1 ? 1 : -1;
+  const flickIdx = (eng === "fragile" || eng === "chaos") && tr.length > 2 ? 2 : -1;
+  tr.forEach((t) => { s += `<path d="${t.d}" stroke="#141A08" stroke-width="${F(baseW + 3.3)}" fill="none"/>`; });
+  tr.forEach((t, i) => {
+    const col = st.burnt && r() < 0.45 ? DEAD : ROBIN;
+    const w = st.oc >= 3 && t.coreLink ? baseW + 0.6 : baseW;
+    if (i === brokenIdx) {
+      const segs = t.d.split(" L ");
+      const keep = segs.slice(0, 2).join(" L ");
+      const last = segs[1].split(" ").map(Number);
+      s += `<path d="${keep}" stroke="${col}" stroke-width="${F(w)}" fill="none" opacity="${t.op}" filter="url(#gt-${uid})"/>` +
+        `<circle cx="${F(last[0])}" cy="${F(last[1])}" r="4.5" fill="none" stroke="${col}" stroke-width="1.6" opacity="0.8"/>`;
+      return;
+    }
+    const flick = i === flickIdx && anim && !st.burnt
+      ? `<animate attributeName="opacity" values="${eng === "chaos" ? "0.95;0.2;0.9;0.5;1" : "0.85;0.25;0.85"}" dur="${eng === "chaos" ? "0.9" : "3.4"}s" repeatCount="indefinite"/>` : ``;
+    s += `<path d="${t.d}" stroke="${col}" stroke-width="${F(w)}" fill="none" opacity="${t.op}" filter="url(#gt-${uid})">${flick}</path>`;
+    for (const v of t.vias) s += `<circle cx="${F(v[0])}" cy="${F(v[1])}" r="3.4" fill="${col}" opacity="0.95"/>`;
+  });
+
+  if (anim && tr.length) {
+    const n = st.burnt ? 1 : Math.min(10, 1 + st.bin + st.oc);
+    for (let i = 0; i < n; i++) {
+      const t = tr[i % tr.length];
+      const jit = eng === "chaos" ? 0.7 + r() * 0.8 : 1;
+      s += `<circle r="4.6" fill="${acc[i % acc.length]}" filter="url(#gc-${uid})"><animateMotion dur="${F(+pulseDur * jit)}s" begin="${F(-(i * 0.7))}s" repeatCount="indefinite" path="${t.d.slice(2)}"/></circle>`;
+    }
+  }
+
+  if (eng === "lanes") {
+    const lanes = blocks.filter(b => b.t === "LANE");
+    lanes.forEach((b, i) => {
+      const ly = b.y + b.h / 2 + 5, id = `ml${i}-${uid}`;
+      const words = (pick(r, LANE_WORDS) + " \u00B7 ").repeat(6);
+      const rev = i % 2 === 1, dur = F((8 + r() * 6) / speed);
+      s += `<defs><path id="${id}" d="M ${b.x + 10} ${F(ly)} H ${b.x + b.w - 10}"/></defs>` +
+        `<text font-family="monospace" font-size="15" fill="${st.burnt ? DEAD : ROBIN}" opacity="0.8"><textPath href="#${id}" startOffset="10%">${words}${anim ? `<animate attributeName="startOffset" values="${rev ? "-60%;110%" : "110%;-60%"}" dur="${dur}s" begin="${F(-(+dur) * 0.45)}s" repeatCount="indefinite"/>` : ``}</textPath></text>`;
+    });
+  }
+
+  // top meme rail — burnt dies read OFF CHAIN; short memes auto-repeat
+  {
+    const md = Math.max(4, (11 * slow) / speed);
+    const base = st.burnt ? BURNT_MEME : traits.meme;
+    const railText = base.length < 14 ? `${base} \u2022 ${base} \u2022 ${base}` : base;
+    const scroll = anim ? `<animate attributeName="startOffset" values="110%;-60%" dur="${F(md)}s" begin="${F(-md * 0.45)}s" repeatCount="indefinite"/>` : ``;
+    s += `<text font-family="monospace" font-size="17" fill="${st.burnt ? DEAD : ROBIN}" opacity="0.85"><textPath href="#rail-${uid}" startOffset="10%">${railText}${scroll}</textPath></text>`;
+  }
+
+  const ledDur = F(Math.max(0.4, (2.3 - 0.3 * st.oc - 0.1 * st.bin) * slow));
+  const ledCol = st.burnt ? MAG : acc[0];
+  s += `<rect x="856" y="842" width="12" height="12" fill="${ledCol}" filter="url(#gt-${uid})">` +
+    (anim ? `<animate attributeName="opacity" values="1;0.12;1" dur="${st.burnt ? "0.35" : ledDur}s" repeatCount="indefinite"/>` : ``) + `</rect>` +
+    `<rect x="836" y="842" width="12" height="12" fill="${DIM}"/>`;
+
+  const node = NODES[Math.max(0, Math.min(5, st.bin - 1))];
+  const lotCol = traits.golden4200 ? GOLD : INK;
+  const E = (x, y, txt, fill = INK, size = 15, anchor = "start", op = "0.8") =>
+    `<text x="${x}" y="${y}" font-family="monospace" font-size="${size}" fill="${fill}" opacity="${op}" text-anchor="${anchor}">${txt}</text>`;
+  s += E(120, 118, `FAB4200 \u00B7 LOT ${traits.lot}`, lotCol);
+  s += E(880, 118, traits.arch, INK, 15, "end");
+  s += E(120, 890, `${node} CLASS${st.bin >= 6 ? " \u00B7 GOLDEN SAMPLE" : ""}`, st.bin >= 6 ? GOLD : INK);
+  s += E(880, 890, `X${String(traits.wx).padStart(2, "0")}\u00B7Y${String(traits.wy).padStart(2, "0")}${traits.edge ? " \u00B7 EDGE" : ""}`, INK, 15, "end");
+  if (st.oc > 0) s += E(880, 142, `OC ${"\u25AE".repeat(st.oc)}${"\u25AF".repeat(3 - st.oc)}`, st.burnt ? MAG : "#FFFFFF", 14, "end", "0.9");
+  if (st.burnt) s += E(500, 64, `OC PUSH FAILED \u2014 DIE SCARRED`, MAG, 14, "middle", "0.75");
+  else if (st.oc >= 3) s += E(500, 64, `4200 MHz \u00B7 OVERCLOCKED`, "#FFFFFF", 15, "middle", "0.9");
+  else if (eng === "fragile") s += E(500, 64, `WEAK HANDS DETECTED`, INK, 13, "middle", "0.6");
+  if (eng === "fragile")
+    s += `<text x="500" y="540" font-family="monospace" font-size="120" fill="${INK}" opacity="0.05" text-anchor="middle" transform="rotate(-18 500 500)">SELL?</text>`;
+  if (eng === "ring") s += E(500, 890, `RUGPROOF PERIMETER`, INK, 13, "middle", "0.6");
+  if (eng === "heavy")
+    for (const [hx, hy, an] of [[142, 152, "start"], [858, 152, "end"], [142, 862, "start"], [858, 862, "end"]])
+      s += E(hx, hy, "HOLD", INK, 12, an, "0.55");
+
+  if (chain)
+    s += E(500, 918, `FAB ${chain.minted}/4200 \u00B7 YIELD ${F(100 * (chain.minted - chain.burnt) / Math.max(1, chain.minted))}% \u00B7 POH ${String(chain.poh).padStart(6, "0")}`, INK, 13, "middle", "0.75");
+  s += waferMark(traits, st, chain, uid, glyphDur, anim);
+  if (traits.meme === "DIAMOND HANDS") s += crystalSigil(uid, glyphDur, anim);
+
+  s += `</svg>`;
+  return s;
+}
+
+if (typeof module !== "undefined") module.exports = { assembleSVG, deriveTraits, headroomFor, seedFromHash, sm32, ARCHS, MEMES, LANE_WORDS };
+
+</script>
+<script>
+// ================= CONFIG — filled at deployment ceremony =================
+const CFG = {
+  deployed: false,
+  chainId: 4663, chainHex: "0x1237",
+  contract: "0x0000000000000000000000000000000000000000", // TODO ceremony
+  rpc: "https://RPC_PLACEHOLDER",                          // TODO official RH Chain RPC
+  explorers: [],                                           // TODO explorer tx/address URL bases
+  floorBits: 26,
+  verifySelector: "0x8753367f", // verify(uint256) — recompute & confirm at ceremony
+  renderer: "0x0000000000000000000000000000000000000000", // TODO ceremony (Phase 7.4)
+};
+const binFromBits = b => Math.max(1, Math.min(6, 1 + Math.floor((b - CFG.floorBits) / 2)));
+const BIN_NAMES = ["14nm","10nm","7nm","5nm","3nm","2nm GOLDEN"];
+
+// ================= spec.json =================
+const SPEC = {
+  name: "FAB 4200", chainId: CFG.chainId, contract: CFG.contract,
+  workRule: "keccak256(chainId32 || contract20 || minter20 || nonce32) with leadingZeroBits >= floor",
+  floorBits: CFG.floorBits, retarget: "EMA on mint cadence, clamped; per-wallet +2-bit escalation",
+  mintCalldata: "0xa0712d68 ++ uint256(nonce)", mintValue: "0", payable: false,
+  binLadder: {"26":"14nm","28":"10nm","30":"7nm","32":"5nm","34":"3nm","36+":"2nm"},
+  approvalsRequired: false, price: "free — cost is proof-of-work",
+  status: CFG.deployed ? "live" : "pre-deploy"
+};
+document.getElementById("spec").textContent = JSON.stringify(SPEC, null, 2);
+
+// ================= miner =================
+let mining=false, tries=0, best=0, bestNonce=0n, bestHash="", t0=0, nonce=0n, addrOk=false;
+const $ = id => document.getElementById(id);
+const log=(el,msg,cls)=>{ $(el).textContent=msg; $(el).className="oklog "+(cls||""); };
+function validAddr(a){ return /^0x[0-9a-fA-F]{40}$/.test(a); }
+
+function updatePacket(){
+  $("pkTo").value = CFG.deployed ? CFG.contract : "(deploys at ceremony)";
+  $("pkData").value = bestHash ? "0xa0712d68" + bestNonce.toString(16).padStart(64,"0") : "";
+}
+// Post-deploy the preview is drawn BY THE CONTRACT (free eth_call) — the same
+// bytes tokenURI returns. Pre-deploy it falls back to a local approximation,
+// clearly labelled, because there is no chain to ask yet.
+const RENDER_SIG = "renderSVG(bytes32,uint8,uint8,bool,uint16,uint16,uint16,uint16)";
+function pad32(hex){ return hex.replace(/^0x/,"").padStart(64,"0"); }
+async function chainRender(hash, bin){
+  const selector = "0x" + keccak256(new TextEncoder().encode(RENDER_SIG)).slice(0,8);
+  const args = pad32(hash) + pad32(best.toString(16)) + pad32("0") + pad32("0")
+             + pad32("41") + pad32("13") + pad32("42") + pad32("0"); // preview site + counters
+  const res = await fetch(CFG.rpc,{method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({jsonrpc:"2.0",id:1,method:"eth_call",params:[{to:CFG.renderer,data:selector+args},"latest"]})});
+  const j = await res.json();
+  if(!j.result || j.result === "0x") throw new Error("empty");
+  const raw = j.result.replace(/^0x/,"");
+  const len = parseInt(raw.slice(64,128),16);
+  const bytes = raw.slice(128, 128+len*2).match(/.{2}/g).map(h=>parseInt(h,16));
+  return new TextDecoder().decode(new Uint8Array(bytes));
+}
+function renderPreview(){
+  if(!bestHash) return;
+  const bin = best>=CFG.floorBits ? binFromBits(best) : 1;
+  $("hashOut").textContent = "workHash 0x"+bestHash+" · "+best+" bits"+(best<CFG.floorBits?" (below floor)":" ✓ mintable");
+  $("hashOut").className = "oklog "+(best>=CFG.floorBits?"ok":"");
+  if(CFG.deployed && CFG.renderer && !/^0x0+$/.test(CFG.renderer)){
+    chainRender(bestHash, bin)
+      .then(svg => { $("preview").innerHTML = svg; $("previewNote").textContent = "rendered on-chain by the renderer contract (free eth_call) — identical bytes to tokenURI"; })
+      .catch(() => { $("preview").innerHTML = assembleSVG(bestHash,{bin,oc:0,burnt:false,anim:true},"lp");
+                     $("previewNote").textContent = "local preview (chain unreachable right now) — the contract is the source of truth"; });
+    return;
+  }
+  $("preview").innerHTML = assembleSVG(bestHash, {bin, oc:0, burnt:false, anim:true}, "lp");
+}
+function step(){
+  if(!mining) return;
+  const addr=$("addr").value.trim(), target=+$("target").value, keep=$("keepGoing").checked;
+  const contract = CFG.deployed ? CFG.contract : "0x"+"42".repeat(20); // pre-deploy: practice preimage, clearly labeled
+  for(let i=0;i<250;i++){
+    nonce++;
+    const h = keccak256(packPreimage(CFG.chainId, contract, addr, nonce));
+    tries++;
+    const b = leadingZeroBits(h);
+    if(b>best){ best=b; bestNonce=nonce; bestHash=h; renderPreview(); updatePacket(); }
+    if(best>=target && !keep){ stopMine("target reached — packet filled below. "+(CFG.deployed?"":"(practice run: preimage used a placeholder contract; re-mine after ceremony)")); return; }
+  }
+  const dt=(Date.now()-t0)/1000;
+  $("sRate").textContent = Math.round(tries/dt)+" H/s";
+  $("sTries").textContent = tries.toLocaleString();
+  $("sBits").textContent = best||"—";
+  $("sBin").textContent = best>=CFG.floorBits ? BIN_NAMES[binFromBits(best)-1] : "below floor";
+  setTimeout(step,0);
+}
+function stopMine(msg){ mining=false; $("bStart").disabled=false; $("bStop").disabled=true; if(msg) log("mineLog",msg,"ok"); }
+$("bStart").onclick=()=>{
+  const a=$("addr").value.trim();
+  if(!validAddr(a)){ log("mineLog","paste a valid 0x address first — the hash binds to it","bad"); return; }
+  mining=true; tries=0; best=0; bestHash=""; nonce=BigInt(Math.floor(Math.random()*1e15)); t0=Date.now();
+  $("bStart").disabled=true; $("bStop").disabled=false;
+  log("mineLog", CFG.deployed?"mining…":"mining (PRACTICE — placeholder contract in preimage until ceremony)…");
+  step();
+};
+$("bStop").onclick=()=>stopMine("stopped");
+$("addr").oninput=()=>{ best=0; bestHash=""; updatePacket(); }; // minter-bound: address change invalidates work
+
+// ================= connect (optional) =================
+$("bConn").onclick=async()=>{
+  if(!window.ethereum){ log("mineLog","no wallet detected — paste your address instead (that path always works)","bad"); return; }
+  try{ const [a]=await ethereum.request({method:"eth_requestAccounts"}); $("addr").value=a; log("mineLog","address filled from wallet — connection is not required to mine or mint","ok"); }
+  catch(e){ log("mineLog","connect declined — paste address manually","bad"); }
+};
+$("bMint").onclick=async()=>{
+  if(!CFG.deployed){ log("mintLog","disabled until deployment ceremony","bad"); return; }
+  if(!bestHash || best<CFG.floorBits){ log("mintLog","mine a valid nonce first","bad"); return; }
+  try{
+    try{ await ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CFG.chainHex}]}); }
+    catch(sw){ await ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:CFG.chainHex,chainName:"Robinhood Chain",rpcUrls:[CFG.rpc],nativeCurrency:{name:"Ether",symbol:"ETH",decimals:18}}]}); }
+    const tx=await ethereum.request({method:"eth_sendTransaction",params:[{from:$("addr").value,to:CFG.contract,value:"0x0",data:$("pkData").value}]});
+    log("mintLog","sent: "+tx,"ok");
+  }catch(e){ log("mintLog","mint failed: "+(e.message||e),"bad"); }
+};
+
+// ================= verify terminal =================
+$("bVerify").onclick=async()=>{
+  const id=$("vId").value.trim();
+  if(!CFG.deployed){
+    $("vOut").textContent="// SIMULATION — at ceremony this runs:\n"+
+      JSON.stringify({jsonrpc:"2.0",id:1,method:"eth_call",params:[{to:CFG.contract,data:CFG.verifySelector+BigInt(id||0).toString(16).padStart(64,"0")},"latest"]},null,2)+
+      "\n// then recomputes keccak256(chainId‖contract‖minter‖nonce) locally and diffs.";
+    return;
+  }
+  try{
+    const body={jsonrpc:"2.0",id:1,method:"eth_call",params:[{to:CFG.contract,data:CFG.verifySelector+BigInt(id).toString(16).padStart(64,"0")},"latest"]};
+    const res=await fetch(CFG.rpc,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+    $("vOut").textContent=JSON.stringify(await res.json(),null,2);
+  }catch(e){ $("vOut").textContent="rpc error: "+e; }
+};
+
+// ================= copy buttons =================
+document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=async()=>{
+  const el=$(b.dataset.copy); await navigator.clipboard.writeText(el.value??el.textContent);
+  b.textContent="COPIED"; setTimeout(()=>b.textContent=b.dataset.copy==="spec"?"COPY SPEC":"COPY",900);
+});
+// ================= live wafer map =================
+(function(){
+  const GRID=67, STRIDE=2741n, MOD=BigInt(GRID*GRID);
+  // build a 20x20 downsample of the 67x67 wafer (one cell ~ a region)
+  const DISP=20, grid=document.getElementById("waferGrid");
+  if(!grid) return;
+  const cells=[];
+  for(let i=0;i<DISP*DISP;i++){ const d=document.createElement("div"); d.className="wcell"; grid.appendChild(d); cells.push(d); }
+  function siteOf(id){ const idx=(BigInt(id)*STRIDE)%MOD; return [Number(idx%BigInt(GRID)), Number(idx/BigInt(GRID))]; }
+  function paint(mintedCount, burntIds){
+    // clear
+    cells.forEach(c=>c.className="wcell");
+    const burnt=new Set(burntIds||[]);
+    for(let id=1; id<=mintedCount; id++){
+      const [x,y]=siteOf(id);
+      const cx=Math.floor(x/GRID*DISP), cy=Math.floor(y/GRID*DISP);
+      const cell=cells[cy*DISP+cx];
+      if(!cell) continue;
+      if(burnt.has(id)) cell.className="wcell burnt";
+      else if(id===mintedCount) cell.className="wcell hot";
+      else if(!cell.classList.contains("burnt")) cell.className="wcell minted";
+    }
+    const stat=document.getElementById("waferStat");
+    if(stat) stat.textContent = mintedCount+" / 4200 fabbed"+(burntIds&&burntIds.length?" · "+burntIds.length+" burnt":"");
+  }
+  async function refresh(){
+    if(CFG.deployed){
+      try{
+        const call=(sel)=>fetch(CFG.rpc,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method:"eth_call",params:[{to:CFG.contract,data:sel},"latest"]})}).then(r=>r.json());
+        const m=await call("0x4f02c420");       // minted()
+        const b=await call("0x46b260ac");       // burntCount()
+        const mv=parseInt((m&&m.result)||"0x0",16)||0;
+        // burntCount is a total, not ids; show count only (ids need event scan, done client-side later)
+        paint(mv, []);
+        const bc=parseInt((b&&b.result)||"0x0",16);
+        const stat=document.getElementById("waferStat");
+        if(stat) stat.textContent=mv+" / 4200 fabbed"+(bc?" · "+bc+" burnt":"");
+      }catch(e){ paint(0,[]); }
+    } else {
+      // PROTOTYPE: animate a plausible fill so the mechanic is visible
+      window.__waferSim=(window.__waferSim||0);
+      window.__waferSim=Math.min(4200, window.__waferSim + Math.floor(Math.random()*23));
+      const burnt=[]; for(let i=0;i<window.__waferSim/60;i++) burnt.push(1+Math.floor(Math.random()*window.__waferSim));
+      paint(window.__waferSim, burnt);
+      if(window.__waferSim>=4200) window.__waferSim=0;
+    }
+  }
+  refresh(); setInterval(refresh, CFG.deployed?15000:1400);
+})();
+updatePacket();
+</script>
+</body>
+</html>

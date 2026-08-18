@@ -1,0 +1,43 @@
+{
+  "name": "FAB 4200",
+  "chainId": 4663,
+  "contract": "0x0000000000000000000000000000000000000000 (TODO ceremony)",
+  "workRule": "keccak256(chainId32 || contract20 || minter20 || nonce32) with leadingZeroBits >= floor",
+  "floorBits": 26,
+  "retarget": "EMA on mint cadence, 16-mint window, +2 fast-clamp vs bursts, per-wallet +2 escalation",
+  "mintCalldata": "0xa0712d68 ++ uint256(nonce)",
+  "mintValue": "0",
+  "payable": false,
+  "price": "free \u2014 cost is proof-of-work",
+  "binLadder": {
+    "26": "14nm",
+    "28": "10nm",
+    "30": "7nm",
+    "32": "5nm",
+    "34": "3nm",
+    "36+": "2nm"
+  },
+  "approvalsRequired": false,
+  "status": "pre-deploy",
+  "fallbackRenderer": "ownerless recovery renderer; tokenURI try/catch never bricks",
+  "selectors": {
+    "mint(uint256)": "0xa0712d68",
+    "verify(uint256)": "0x8753367f",
+    "minted()": "0x4f02c420",
+    "burntCount()": "0x46b260ac",
+    "currentFloor(address)": "computed",
+    "siteOf(uint256)": "pure: id*2741 % 67^2",
+    "renderSVG(bytes32,uint8,uint8,bool,uint16,uint16,uint16,uint16)": "computable via keccak; the site derives it at runtime"
+  },
+  "renderer": {
+    "architecture": "four ownerless immutable contracts: FAB4200Renderer (primary) -> FAB4200Interiors + FAB4200Decor; FallbackRenderer for recovery",
+    "fullyOnChain": true,
+    "output": "data:application/json;base64 with data:image/svg+xml;base64 image",
+    "worstCaseSvgBytes": 30476,
+    "worstCaseTokenUriGas": 11208441,
+    "qc": "4,200-token sweep + 644-case adversarial fuzz, zero failures"
+  },
+  "premint": 0,
+  "genesisAllocation": "none \u2014 supply starts at 0; every token is mined by proof-of-work",
+  "royalty": "500 bps to an immutable address that receives no tokens"
+}
