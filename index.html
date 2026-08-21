@@ -11,14 +11,14 @@
 <meta property="og:site_name" content="FAB 4200">
 <meta property="og:url" content="https://fab4200.vercel.app/">
 <meta property="og:title" content="FAB 4200 — you don't buy silicon. you fab it.">
-<meta property="og:description" content="Free proof-of-work mint on Robinhood Chain. No buy button, no owner, zero premint — 26 bits gets you silicon, 36+ prints gold. Fully on-chain SVG.">
+<meta property="og:description" content="Free proof-of-work mint on Robinhood Chain. No buy button, no owner, zero premint — the floor is read live from the chain on the page — work gets you silicon. Fully on-chain SVG.">
 <meta property="og:image" content="https://fab4200.vercel.app/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="FAB 4200 — a golden 2nm silicon die mined on Robinhood Chain, beside the words: you don't buy silicon. you fab it.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="FAB 4200 — you don't buy silicon. you fab it.">
-<meta name="twitter:description" content="Free proof-of-work mint on Robinhood Chain. No owner, zero premint. 26 bits gets you silicon, 36+ prints gold.">
+<meta name="twitter:description" content="Free proof-of-work mint on Robinhood Chain. No owner, zero premint. the floor is read live from the chain on the page — work gets you silicon.">
 <meta name="twitter:image" content="https://fab4200.vercel.app/og-image.png">
 <meta name="twitter:image:alt" content="A golden 2nm FAB 4200 die, mined on Robinhood Chain.">
 <meta name="fab4200-chainId" content="4663">
@@ -176,7 +176,7 @@
       <div class="packet"><div class="row"><input type="text" id="addr" spellcheck="false" placeholder="0x…40 hex"><button id="bConn">CONNECT</button></div></div>
       <span class="lbl">Target</span>
       <select id="target">
-        <option value="26">FLOOR · 26 bits · 14nm</option>
+        <option value="26">26 bits · 14nm — contract minimum at open</option>
         <option value="28">28 bits · 10nm</option>
         <option value="30">30 bits · 7nm</option>
         <option value="32">32 bits · 5nm</option>
@@ -254,7 +254,7 @@
 
 <section id="rule">
   <h2>The Work Rule — one line, checked by consensus</h2>
-  <div class="rule">workHash = keccak256( <i>chainId₃₂</i> ‖ <i>contract₂₀</i> ‖ <i>minter₂₀</i> ‖ <i>nonce₃₂</i> )<br>valid ⇔ leadingZeroBits(workHash) ≥ <i>floor</i> (26 at open — the mint is FREE, so work is the whole cost; EMA-retargeted vs mint rate)<br>binGrade = 14nm→2nm ladder over bits 26…36+ · your extra work is your rarity</div>
+  <div class="rule">workHash = keccak256( <i>chainId₃₂</i> ‖ <i>contract₂₀</i> ‖ <i>minter₂₀</i> ‖ <i>nonce₃₂</i> )<br>valid ⇔ leadingZeroBits(workHash) ≥ <i>floor</i> (<b id="ruleFloor" style="color:#ffb000">reading chain…</b> LIVE right now · opened at 26 — mint is FREE, work is the whole cost; EMA-retargeted vs mint rate)<br>binGrade = 14nm→2nm ladder over bits 26…36+ · your extra work is your rarity</div>
   <p class="lead">The hash binds to <em>your</em> address — a nonce mined for one wallet is worthless to any other, so nothing can be stolen in flight. Every winning hash mints exactly once, ever. The renderer runs inside <code>tokenURI</code>: mint stores only (minter, nonce); the art is recomputed by the chain itself, free, forever.</p>
 </section>
 
@@ -950,7 +950,7 @@ function validAddr(a){ return /^0x[0-9a-fA-F]{40}$/.test(a); }
 function updatePacket(){
   $("pkTo").value = CFG.deployed ? CFG.contract : "(deploys at ceremony)";
   $("pkData").value = bestHash ? "0xa0712d68" + bestNonce.toString(16).padStart(64,"0") : "";
-  $("bMint").disabled = !(CFG.deployed && bestHash && best >= CFG.floorBits);
+  $("bMint").disabled = !(CFG.deployed && bestHash && best >= (window.__liveFloorFor?window.__liveFloorFor((($("addr")||{}).value||"").trim()):CFG.floorBits));
 }
 // Post-deploy the preview is drawn BY THE CONTRACT (free eth_call) — the same
 // bytes tokenURI returns. Pre-deploy it falls back to a local approximation,
@@ -973,8 +973,8 @@ async function chainRender(hash, bin){
 function renderPreview(){
   if(!bestHash) return;
   const bin = best>=CFG.floorBits ? binFromBits(best) : 1;
-  $("hashOut").textContent = "workHash 0x"+bestHash+" · "+best+" bits"+(best<CFG.floorBits?" (below floor)":" ✓ mintable");
-  $("hashOut").className = "oklog "+(best>=CFG.floorBits?"ok":"");
+  $("hashOut").textContent = "workHash 0x"+bestHash+" · "+best+" bits"+(best<(window.__liveFloorNum?window.__liveFloorNum():CFG.floorBits)?" (below LIVE floor "+(window.__liveFloorNum?window.__liveFloorNum():CFG.floorBits)+")":" ✓ clears live floor "+(window.__liveFloorNum?window.__liveFloorNum():CFG.floorBits));
+  $("hashOut").className = "oklog "+(best>=(window.__liveFloorNum?window.__liveFloorNum():CFG.floorBits)?"ok":"");
   if(CFG.deployed && CFG.renderer && !/^0x0+$/.test(CFG.renderer)){
     chainRender(bestHash, bin)
       .then(svg => { $("preview").innerHTML = svg; $("previewNote").textContent = "rendered on-chain by the renderer contract (free eth_call) — identical bytes to tokenURI"; })
@@ -1025,7 +1025,7 @@ $("bConn").onclick=async()=>{
 };
 $("bMint").onclick=async()=>{
   if(!CFG.deployed){ log("mintLog","disabled until deployment ceremony","bad"); return; }
-  if(!bestHash || best<CFG.floorBits){ log("mintLog","mine a valid nonce first","bad"); return; }
+  if(!bestHash || best<(window.__liveFloorFor?window.__liveFloorFor((($("addr")||{}).value||"").trim()):CFG.floorBits)){ log("mintLog","mine a nonce that clears the LIVE floor ("+(window.__liveFloorNum?window.__liveFloorNum():CFG.floorBits)+" bits) first","bad"); return; }
   try{
     try{ await ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CFG.chainHex}]}); }
     catch(sw){ await ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:CFG.chainHex,chainName:"Robinhood Chain",rpcUrls:[CFG.rpc],nativeCurrency:{name:"Ether",symbol:"ETH",decimals:18}}]}); }
@@ -1136,6 +1136,56 @@ document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=async()=>{
   setInterval(tick, 1000);
 })();
 updatePacket();
+</script>
+<script id="livefloor">
+(function(){
+try{
+if(!CFG || !CFG.deployed) return;
+var SEL_FLOOR="0xc7a44a6e", SEL_CUR="0x6e5b24a5";           // floorBase() / currentFloor(address) — keccak-derived, cross-checked against the page's proven selectors
+var LF=null, WF=null, lastAddr="", $i=function(id){return document.getElementById(id);};
+window.__liveFloorNum=function(){ return (WF!=null?WF:(LF!=null?LF:CFG.floorBits)); };
+window.__liveFloorFor=function(a){ if(a && /^0x[0-9a-fA-F]{40}$/.test(a) && a.toLowerCase()!==lastAddr) fetchWallet(a); return window.__liveFloorNum(); };
+function rpc(data){ return fetch(CFG.rpc,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method:"eth_call",params:[{to:CFG.contract,data:data},"latest"]})}).then(function(r){return r.json();}).then(function(j){ if(j.error) throw j.error; return j.result; }); }
+function fetchWallet(a){ lastAddr=a.toLowerCase(); rpc(SEL_CUR+"000000000000000000000000"+lastAddr.slice(2)).then(function(h){ WF=parseInt(h,16); paint(); }).catch(function(){ WF=null; }); }
+function rateNow(){ var m=/([\d,]+)\s*H\/s/.exec(($i("sRate")||{}).textContent||""); var r=m?parseInt(m[1].replace(/,/g,""),10):0; return r>0?{r:r,meas:true}:{r:30000,meas:false}; }
+function fmtS(s){ if(s<3600) return Math.max(1,Math.round(s/60))+" min"; if(s<172800) return (s/3600).toFixed(1)+" hours"; if(s<63072000) return Math.round(s/86400)+" days"; return (s/31536000).toFixed(1)+" years"; }
+function fmtH(n){ if(n>=1e12) return (n/1e12).toFixed(1)+" trillion"; if(n>=1e9) return (n/1e9).toFixed(1)+" billion"; return Math.round(n/1e6)+" million"; }
+function ensure(id, make){ var el=$i(id); if(!el){ el=make(); el.id=id; } return el; }
+function paint(){
+  if(LF==null) return;
+  var eff=window.__liveFloorNum(), rt=rateNow(), secs=Math.pow(2,eff)/rt.r, viable=secs<=172800;
+  var cs=$i("cStatus"); if(cs&&cs.closest){ var chip=ensure("cFloorChip",function(){ var d=document.createElement("div"); d.className="chip"; d.innerHTML='LIVE FLOOR <b id="cFloor">—</b>'; cs.closest(".chip").parentNode.insertBefore(d, cs.closest(".chip").nextSibling); return d; }); var b=$i("cFloor"); b.textContent=LF+" BITS"+(WF!=null&&WF>LF?" · YOURS "+WF:""); b.style.color=LF>30?"#ff5d5d":""; }
+  var rf=$i("ruleFloor"); if(rf) rf.textContent=eff+" bits";
+  var rb=$i("ribbon"); if(rb){ var s=ensure("ribbonFloor",function(){ var x=document.createElement("span"); rb.appendChild(x); return x; }); s.textContent=" · LIVE FLOOR: "+LF+" BITS"; }
+  var t=$i("target");
+  if(t){ for(var i=0;i<t.options.length;i++){ var o=t.options[i]; if(o.id==="optLive") continue; var v=+o.value; if(v<eff){ o.disabled=true; if(!o.dataset.lf){o.dataset.lf="1"; o.textContent+=" — below LIVE floor";} } else if(o.dataset.lf){ o.disabled=false; o.textContent=o.textContent.replace(" — below LIVE floor",""); delete o.dataset.lf; } }
+    var ol=$i("optLive"); if(!ol){ ol=document.createElement("option"); ol.id="optLive"; t.insertBefore(ol,t.firstChild); }
+    ol.value=eff; ol.textContent="LIVE FLOOR · "+eff+" bits · "+(typeof BIN_NAMES!=="undefined"?BIN_NAMES[binFromBits(eff)-1]:"")+" · required now";
+    if(+t.value<eff) t.value=String(eff); }
+  var bs=$i("bStart"), host=bs&&bs.closest?bs.closest(".packet"):null;
+  var bn=ensure("floorBanner",function(){ var d=document.createElement("div"); if(host&&host.parentNode) host.parentNode.insertBefore(d,host); else if($i("mine")) $i("mine").insertBefore(d,$i("mine").firstChild); return d; });
+  bn.style.cssText="font-family:var(--mono,monospace);font-size:12.5px;line-height:1.55;padding:12px 14px;margin:12px 0;border:1px solid "+(viable?"#ffb000":"#ff5d5d")+";background:"+(viable?"rgba(255,176,0,.06)":"rgba(255,93,93,.07)")+";color:"+(viable?"#ffb000":"#ff8d8d");
+  var exp=(CFG.explorers&&CFG.explorers[0])?CFG.explorers[0].replace(/\/$/,"")+"/address/"+CFG.contract:null;
+  var h="";
+  if(viable){ h+="<b>LIVE FLOOR: "+eff+" bits</b> (opened at 26 — this number is read from the contract every 30 s).<br>Estimated ~"+fmtS(secs)+" per die on this device "+(rt.meas?"(measured "+rt.r.toLocaleString()+" H/s)":"(assuming ~30 kH/s; press START to measure)")+"."; }
+  else { h+="<b style=\"font-size:14px\">⛔ BROWSER MINING IS NOT VIABLE RIGHT NOW</b><br>"
+        +"Live floor: <b>"+eff+" bits</b> ≈ 2^"+eff+" ≈ "+fmtH(Math.pow(2,eff))+" hashes ≈ <b>~"+fmtS(secs)+"</b> per die "+(rt.meas?"at your measured "+rt.r.toLocaleString()+" H/s":"at a typical browser's ~30 kH/s")+".<br>"
+        +"This page previously showed a fixed 26-bit target — that was wrong. The number above is the truth, read from the contract itself every 30 s.<br>"
+        +"The floor falls only by the contract's own retarget: −1 bit per 16 mints when spacing runs slower than 3 minutes. No one — creator included — can lower it by hand.";
+        if(eff>=36 && typeof BIN_NAMES!=="undefined") h+="<br>One true silver lining: anything that clears the live floor is automatically <b>"+BIN_NAMES[binFromBits(eff)-1]+"</b>.";
+  }
+  if(WF!=null&&WF>LF) h+="<br>This wallet has minted before → its personal floor is <b>"+WF+" bits</b> (+2 per prior mint, permanent).";
+  if(exp) h+='<br><a href="'+exp+'" target="_blank" rel="noopener" style="color:inherit">watch FloorRetarget events on the explorer →</a>';
+  bn.innerHTML=h;
+  var sp=$i("spec"); if(sp){ try{ var j=JSON.parse(sp.textContent); j.floorBitsLive=LF; if(WF!=null)j.floorBitsWallet=WF; j.floorChecked=new Date().toISOString(); sp.textContent=JSON.stringify(j,null,2);}catch(e){} }
+}
+function fail(){ var cs=$i("cStatus"); if(cs&&cs.closest){ var chip=ensure("cFloorChip",function(){ var d=document.createElement("div"); d.className="chip"; d.innerHTML='LIVE FLOOR <b id="cFloor">—</b>'; cs.closest(".chip").parentNode.insertBefore(d, cs.closest(".chip").nextSibling); return d; }); } var bs=$i("bStart"), host=bs&&bs.closest?bs.closest(".packet"):null; var bn=ensure("floorBanner",function(){ var d=document.createElement("div"); if(host&&host.parentNode) host.parentNode.insertBefore(d,host); return d; }); if(bn){ bn.style.cssText="font-family:var(--mono,monospace);font-size:12.5px;padding:10px 14px;margin:12px 0;border:1px solid #ff5d5d;color:#ff8d8d"; bn.textContent="Couldn't reach the RPC to read the live difficulty floor. Do NOT assume 26 bits — check floorBase() on the explorer before mining."; } }
+function tick(){ rpc(SEL_FLOOR).then(function(h){ LF=parseInt(h,16); var a=(($i("addr")||{}).value||"").trim(); if(/^0x[0-9a-fA-F]{40}$/.test(a)&&a.toLowerCase()!==lastAddr) fetchWallet(a); else paint(); }).catch(function(e){ if(LF==null) fail(); }); }
+var ai=$i("addr"), db=null; if(ai) ai.addEventListener("input",function(){ clearTimeout(db); db=setTimeout(function(){ var a=ai.value.trim(); if(/^0x[0-9a-fA-F]{40}$/.test(a)) fetchWallet(a); else { WF=null; lastAddr=""; paint(); } },400); });
+setInterval(paint,5000); // re-derive ETA from live measured hashrate while mining
+tick(); setInterval(tick,30000);
+}catch(e){ console.warn("livefloor:",e); }
+})();
 </script>
 </body>
 </html>
